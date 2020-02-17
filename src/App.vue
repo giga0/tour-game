@@ -1,5 +1,7 @@
 <template>
-  <div id="app">
+  <div
+    v-if="db_initialized"
+    id="app">
     <h1 class="heading">Tour Game</h1>
     <div class="global-wrapper">
       <div class="game-wrapper">
@@ -47,6 +49,8 @@
 
 <script>
 /* eslint-disable */
+import IndexedDB from './api/idb'
+
 import { getPossibleSteps, calculateTour } from './helpers/tourCalculationFunctions'
 
 import Box from './components/Box'
@@ -68,6 +72,7 @@ export default {
   
   data () {
     return {
+      db_initialized: false,
       board: null,
       start: true,
       cachedSteps: [],
@@ -121,6 +126,10 @@ export default {
 
   created () {
     this.board = this.generateBoard(5)
+    const idb = new IndexedDB([ 'user_data', 'scores' ])
+    idb.getDb().then(() => {
+      this.db_initialized = true
+    })
   },
 
   methods: {
