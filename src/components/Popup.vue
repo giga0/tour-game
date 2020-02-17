@@ -6,14 +6,16 @@
       <slot />
       <div class="buttons">
         <btn
+          v-if="buttons.reject.is_visible"
           color="#f33558"
-          @click="$emit('doNotContinue')">
-          No
+          @click="$emit('reject')">
+          {{ buttons.reject.text }}
         </btn>
         <btn
+          v-if="buttons.confirm.is_visible"
           color="#298c29"
-          @click="$emit('continue')">
-          Yes
+          @click="$emit('confirm')">
+          {{ buttons.confirm.text }}
         </btn>
       </div>
     </div>
@@ -28,6 +30,10 @@ export default {
 
   components: {
     Btn
+  },
+
+  props: {
+    buttons: { type: Object }
   }
 }
 </script>

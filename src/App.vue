@@ -22,14 +22,18 @@
     <transition name="fade">
       <popup
         v-if="levelStatus.finished"
-        @doNotContinue="resetLevelStatus"
-        @continue="continuePlaying">
+        :buttons="{
+          reject: { text: 'No', is_visible: true },
+          confirm: { text: 'Yes', is_visible: true }
+        }"
+        @reject="resetLevelStatus"
+        @confirm="continuePlaying">
         <template v-slot:header>
           <h4 :class="popupHeaderClass">{{ popupHeader }}</h4>
         </template>
         <p>{{ popupText }}</p>
         <div
-          v-if="stats.lives"
+          v-if="levelStatus.failed && stats.lives"
           class="select-level">
           <span>Choose level:</span>
           <dropdown
