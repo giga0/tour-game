@@ -1,7 +1,7 @@
 <template>
   <div
     class="game-stats">
-    <p>Stats</p>
+    <h5 class="title">Stats</h5>
     <span>Timer: {{ stats.timer }}s</span>
     <span>Left to click: {{ stats.leftToClick }}</span>
     <span>Lives: {{ stats.lives }}</span>
@@ -30,9 +30,10 @@ export default {
   @include breakpoint(desktop) {
     margin-top: 2rem;
   }
-  p {
+  .title {
     color: $red_pink;
-    @include fontSizeRem(14, 22);
+    @include fontSizeRem(16, 24);
+    font-weight: 500;
   }
   span {
     @include fontSizeRem(12, 20);
