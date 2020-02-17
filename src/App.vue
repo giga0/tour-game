@@ -1,13 +1,14 @@
 <template>
-  <div
-    v-if="db_initialized"
-    id="app">
+  <div id="app">
     <!-- Header -->
     <header>
       <h1 class="heading">Tour Game</h1>
       <div class="menu">
+        <p>
+          Player: {{ activePlayer ? activePlayer.name : '/' }}
+        </p>
         <btn
-          @click="choosePlayerPopupOpened = true">
+          @click="choosePlayer">
           Create / Switch player
         </btn>
       </div>
@@ -41,21 +42,23 @@
         <template v-slot:header>
           <h4 :class="popupHeaderClass">{{ popupHeader }}</h4>
         </template>
-        <p>{{ popupText }}</p>
-        <div
-          v-if="levelStatus.failed && stats.lives || false"
-          class="select">
-          <span>Choose level:</span>
-          <dropdown
-            :items="dropdownItems"
-            @selected="selectedDropdownValue($event)" />
-        </div>
+        <p class="popup-text">{{ popupText }}</p>
+        <transition name="fade">
+          <div
+            v-if="dropdownItems.length && !createdPlayer"
+            class="select">
+            <span>Choose:</span>
+            <dropdown
+              :items="dropdownItems"
+              @selected="dropdownSelected = $event" />
+          </div>
+        </transition>
         <div
           v-if="choosePlayerPopupOpened"
           class="input">
           <span>Create new:</span>
           <input
-            v-model="player"
+            v-model="createdPlayer"
             type="text" />
         </div>
       </popup>
@@ -75,6 +78,8 @@ import Popup from './components/Popup'
 import Dropdown from './components/Dropdown'
 import Btn from './components/Button'
 
+const idb = new IndexedDB([ 'players', 'scores' ])
+
 const cloneDeep = require('lodash.clonedeep')
 
 export default {
@@ -90,7 +95,6 @@ export default {
   
   data () {
     return {
-      db_initialized: false,
       board: null,
       start: true,
       cachedSteps: [],
@@ -102,13 +106,15 @@ export default {
       stats: {
         timer: 0,
         leftToClick: 0,
-        lives: 3,
-        level: 5
+        lives: 1,
+        level: 1
       },
       dropdownItems: [],
-      selectedLevel: null,
-      player: null,
-      choosePlayerPopupOpened: false
+      dropdownSelected: null,
+      createdPlayer: null,
+      choosePlayerPopupOpened: false,
+      players: null,
+      activePlayer: null
     }
   },
 
@@ -164,13 +170,21 @@ export default {
 
   created () {
     this.board = this.generateBoard(5)
-    const idb = new IndexedDB([ 'user_data', 'scores' ])
-    idb.getDb().then(() => {
-      this.db_initialized = true
-    })
+    this.getPlayers()
   },
 
   methods: {
+    getPlayers () {
+      return new Promise(resolve => {
+        idb.getStore('players').then(players => {
+          this.players = players
+          resolve()
+        })
+      })
+    },
+    getPlayer (id) {
+      return this.players.find(player => player.id === id)
+    },
     generateBoard (size) {
       const board = []
       // vertical board setup
@@ -261,6 +275,7 @@ export default {
     levelCompleted () {
       this.levelStatus.finished = true
       this.levelStatus.completed = true
+      if (this.activePlayer) this.updatePlayerData()
     },
     levelFailed () {
       const livesLeft = this.stats.lives - this.stats.leftToClick
@@ -268,11 +283,11 @@ export default {
       this.levelStatus.finished = true
       this.levelStatus.failed = true
       if (this.stats.lives) {
-        this.dropdownItems = []
         for (let i = this.stats.level - 1; i > 0; i--) {
-          this.dropdownItems.push(i)
+          this.dropdownItems.push({ value: i })
         }
       }
+      if (this.activePlayer) this.updatePlayerData()
     },
     resetLevelStatus () {
       this.levelStatus.finished = false
@@ -284,8 +299,8 @@ export default {
       if (this.levelStatus.failed) {
         if (this.stats.lives) this.playSelectedLevel()
         else this.playFromBeginning()
-        this.stats.leftToClick = 0
       }
+      this.stats.leftToClick = 0
       this.stats.timer = 0
       this.start = true
       this.board = this.generateBoard(5)
@@ -296,27 +311,73 @@ export default {
       this.stats.level++
     },
     playSelectedLevel () {
-      this.stats.level = this.selectedLevel
-      this.selectedLevel = null
+      this.stats.level = this.dropdownSelected.value
+      this.dropdownSelected = null
     },
     playFromBeginning () {
       this.stats.lives = 1
       this.stats.level = 1
     },
     choosePlayer () {
-
+      for (let player of this.players) {
+        this.dropdownItems.push({ id: player.id, value: player.name })
+      }
+      this.choosePlayerPopupOpened = true
+    },
+    playerChoosen () {
+      if (this.createdPlayer) this.createNewPlayer()
+      else {
+        this.activePlayer = this.getPlayer(this.dropdownSelected.id)
+        this.stats.lives = this.activePlayer.lives
+        this.stats.level = this.activePlayer.level
+      }
+      this.choosePlayerPopupOpened = false
+      this.dropdownSelected = null
+      this.createdPlayer = null
+      this.continuePlaying()
+    },
+    createNewPlayer () {
+      const payload = {
+        name: this.createdPlayer,
+        lives: 1,
+        level: 1
+      }
+      idb.saveData('players', payload).then(id => {
+        this.getPlayers().then(() => {
+          this.activePlayer = this.getPlayer(id)
+          this.stats.lives = this.activePlayer.lives
+          this.stats.level = this.activePlayer.level
+        })
+      })
+    },
+    updatePlayerData () {
+      const payload = {
+        id: this.activePlayer.id,
+        name: this.activePlayer.name,
+        lives: this.stats.lives,
+        level: this.stats.level
+      }
+      if (this.levelStatus.completed) {
+        payload.lives++
+        payload.level++
+      }
+      if (this.levelStatus.failed) {
+        payload.lives = payload.lives || 1
+        payload.level = this.stats.lives ? payload.level : 1
+      }
+      idb.updateData('players', payload).then(() => {
+        this.getPlayers()
+      })
     },
     rejectButtonClicked () {
       if (this.levelStatus.finished) this.resetLevelStatus()
       if (this.choosePlayerPopupOpened) this.choosePlayerPopupOpened = false
+      this.dropdownItems = []
     },
     confirmButtonClicked () {
       if (this.levelStatus.finished) this.continuePlaying()
-      if (this.choosePlayerPopupOpened) this.choosePlayer()
-    },
-    selectedDropdownValue (value) {
-      if (this.levelStatus.finished) this.selectedLevel = value
-      if (this.choosePlayerPopupOpened) this.player = value
+      if (this.choosePlayerPopupOpened) this.playerChoosen()
+      this.dropdownItems = []
     }
   }
 }
@@ -350,9 +411,16 @@ export default {
       }
     }
     .menu {
+      display: flex;
+      align-items: center;
       margin-top: 1rem;
       @include breakpoint(desktop) {
         margin-top: 0;
+      }
+      p {
+        @include fontSizeRem(12, 20);
+        font-weight: 700;
+        margin-right: 2rem;
       }
     }
   }
@@ -388,7 +456,7 @@ export default {
       color: $red_pink;
     }
   }
-  p {
+  .popup-text {
     @include fontSizeRem(12, 20);
     margin-bottom: 2rem;
     @include breakpoint(desktop) {
@@ -401,7 +469,7 @@ export default {
     margin-top: -1rem;
     margin-bottom: 1rem;
     @include breakpoint(desktop) {
-      margin-top: -3rem;
+      margin-top: -2.5rem;
       margin-bottom: 3rem;
     }
     span {
@@ -415,7 +483,7 @@ export default {
     margin-top: -.5rem;
     margin-bottom: 1rem;
     @include breakpoint(desktop) {
-      margin-top: -1.5rem;
+      margin-top: -2rem;
       margin-bottom: 3rem;
     }
     span {
@@ -427,7 +495,12 @@ export default {
       border: 1px solid $blue;
       border-radius: 5px;
       background-color: transparent;
+      width: 50%;
       padding: .5rem;
+      @include breakpoint(desktop) {
+        width: 46.6%;
+        padding: .7rem;
+      }
     }
   }
   .fade-enter-active, .fade-leave-active {

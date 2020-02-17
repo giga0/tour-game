@@ -1,12 +1,12 @@
 <template>
   <div
-    v-if="items"
+    v-if="items.length"
     class="dropdown">
     <div
       class="wrapper"
       @click="onClick">
       <button class="selected">
-        <span>{{ selected }}</span>
+        <span>{{ selected.value }}</span>
         <div class="triangle"></div>
       </button>
       <div
@@ -14,10 +14,10 @@
         class="list">
         <ul>
           <li
-            v-for="item in items"
-            :key="item"
+            v-for="(item, index) in items"
+            :key="index"
             @click="selectLevel(item)">
-            {{ item }}
+            {{ item.value }}
           </li>
         </ul>
       </div>
@@ -76,7 +76,7 @@ export default {
     border-radius: 6px;
     background-color: rgba(36, 41, 55, .1);
     width: 10.8rem;
-    padding: .5rem 1rem;
+    padding: .3rem 1rem;
     overflow: hidden;
     @include breakpoint(desktop) {
       width: 18.3rem;
