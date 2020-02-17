@@ -73,10 +73,10 @@ export default {
 .dropdown {
   .wrapper {
     position: relative;
-    width: 5rem;
+    width: 10.8rem;
     margin: 0 auto;
     @include breakpoint(desktop) {
-      width: 6rem;
+      width: 18.3rem;
     }
   }
   .selected {
@@ -85,11 +85,11 @@ export default {
     align-items: center;
     border-radius: 6px;
     background-color: rgba(36, 41, 55, .1);
-    width: 5rem;
+    width: 10.8rem;
     padding: .5rem 1rem;
     overflow: hidden;
     @include breakpoint(desktop) {
-      width: 6rem;
+      width: 18.3rem;
       transition: all .25s ease;
       &:hover {
         background-color: rgba(36, 41, 55, .3);
@@ -100,14 +100,18 @@ export default {
       width: 0;
       height: 0;
       border-style: solid;
-      border-width: .5rem .5rem 0 .5rem;
+      border-width: .4rem .4rem 0 .4rem;
       border-color: $black transparent transparent transparent;
+      @include breakpoint(desktop) {
+        border-width: .6rem .6rem 0 .6rem;
+      }
     }
     span {
       color: $font_color;
       @include fontSizeRem(12, 18);
       line-height: 1.8;
       display: inline-block;
+      width: 100%;
       margin-right: .8rem;
       white-space: nowrap;
       overflow: hidden;
@@ -117,7 +121,7 @@ export default {
     visibility: hidden;
     opacity: 0;
     overflow: hidden;
-    width: 5rem;
+    width: 10.8rem;
     position: absolute;
     bottom: -.5rem;
     border-radius: 9px;
@@ -126,7 +130,7 @@ export default {
     background-color: $white;
     transition: all .25s ease-in-out;
     @include breakpoint(desktop) {
-      width: 6rem;
+      width: 18.3rem;
     }
     &.is-visible {
       visibility: visible;
