@@ -1,6 +1,6 @@
 <template>
   <div
-    v-if="levels"
+    v-if="items"
     class="dropdown">
     <div
       class="wrapper"
@@ -14,10 +14,10 @@
         class="list">
         <ul>
           <li
-            v-for="lvl in levels"
-            :key="lvl"
-            @click="selectLevel(lvl)">
-            {{ lvl }}
+            v-for="item in items"
+            :key="item"
+            @click="selectLevel(item)">
+            {{ item }}
           </li>
         </ul>
       </div>
@@ -30,7 +30,7 @@ export default {
   name: 'Dropdown',
 
   props: {
-    level: { type: Number }
+    items: { type: Array }
   },
 
   data () {
@@ -40,28 +40,18 @@ export default {
     }
   },
 
-  computed: {
-    levels () {
-      const levels = []
-      for (let i = this.level - 1; i > 0; i--) {
-        levels.push(i)
-      }
-      return levels
-    }
-  },
-
   created () {
-    this.selected = this.level - 1
-    this.$emit('levelSelected', this.selected)
+    this.selected = this.items[0]
+    this.$emit('selected', this.selected)
   },
 
   methods: {
     onClick () {
       this.$refs.list.classList.toggle('is-visible')
     },
-    selectLevel (level) {
-      this.selected = level
-      this.$emit('levelSelected', this.selected)
+    selectLevel (item) {
+      this.selected = item
+      this.$emit('selected', this.selected)
     }
   }
 }

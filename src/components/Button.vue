@@ -24,7 +24,7 @@ export default {
 button {
   @include fontSizeRem(12, 18);
   color: $white;
-  background-color: $light_blue;
+  background-color: $blue;
   padding: .8rem;
   border-radius: 5px;
   &:disabled {

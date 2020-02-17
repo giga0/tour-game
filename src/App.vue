@@ -2,8 +2,18 @@
   <div
     v-if="db_initialized"
     id="app">
-    <h1 class="heading">Tour Game</h1>
-    <div class="global-wrapper">
+    <!-- Header -->
+    <header>
+      <h1 class="heading">Tour Game</h1>
+      <div class="menu">
+        <btn
+          @click="choosePlayerPopupOpened = true">
+          Create / Switch player
+        </btn>
+      </div>
+    </header>
+    <!-- Main wrapper -->
+    <main class="global-wrapper">
       <div class="game-wrapper">
         <div class="board">
           <template
@@ -20,27 +30,33 @@
       </div>
       <div class="score-wrapper">
       </div>
-    </div>
+    </main>
+    <!-- Global popup -->
     <transition name="fade">
       <popup
-        v-if="levelStatus.finished"
-        :buttons="{
-          reject: { text: 'No', is_visible: true },
-          confirm: { text: 'Yes', is_visible: true }
-        }"
-        @reject="resetLevelStatus"
-        @confirm="continuePlaying">
+        v-if="levelStatus.finished || choosePlayerPopupOpened"
+        :buttons="popupButtons"
+        @reject="rejectButtonClicked"
+        @confirm="confirmButtonClicked">
         <template v-slot:header>
           <h4 :class="popupHeaderClass">{{ popupHeader }}</h4>
         </template>
         <p>{{ popupText }}</p>
         <div
-          v-if="levelStatus.failed && stats.lives"
-          class="select-level">
+          v-if="levelStatus.failed && stats.lives || false"
+          class="select">
           <span>Choose level:</span>
           <dropdown
-            :level="stats.level"
-            @levelSelected="selectedLevel = $event" />
+            :items="dropdownItems"
+            @selected="selectedDropdownValue($event)" />
+        </div>
+        <div
+          v-if="choosePlayerPopupOpened"
+          class="input">
+          <span>Create new:</span>
+          <input
+            v-model="player"
+            type="text" />
         </div>
       </popup>
     </transition>
@@ -57,6 +73,7 @@ import Box from './components/Box'
 import GameStats from './components/GameStats'
 import Popup from './components/Popup'
 import Dropdown from './components/Dropdown'
+import Btn from './components/Button'
 
 const cloneDeep = require('lodash.clonedeep')
 
@@ -67,7 +84,8 @@ export default {
     Box,
     GameStats,
     Popup,
-    Dropdown
+    Dropdown,
+    Btn
   },
   
   data () {
@@ -87,7 +105,10 @@ export default {
         lives: 3,
         level: 5
       },
-      selectedLevel: null
+      dropdownItems: [],
+      selectedLevel: null,
+      player: null,
+      choosePlayerPopupOpened: false
     }
   },
 
@@ -101,6 +122,7 @@ export default {
           else header = 'End game'
         }
       }
+      if (this.choosePlayerPopupOpened) header = 'Choose player'
       return header
     },
     popupHeaderClass () {
@@ -120,7 +142,23 @@ export default {
           else text = 'You have lost this game. Do you want to play again?'
         }
       }
+      if (this.choosePlayerPopupOpened) text = 'You can choose existing or create a new player.'
       return text
+    },
+    popupButtons () {
+      const buttons = {
+        reject: { text: '', is_visible: true },
+        confirm: { text: '', is_visible: true }
+      }
+      if (this.levelStatus.finished) {
+        buttons.reject.text = 'No'
+        buttons.confirm.text = 'Yes'
+      }
+      if (this.choosePlayerPopupOpened) {
+        buttons.reject.text = 'Cancel'
+        buttons.confirm.text = 'Confirm'
+      }
+      return buttons
     }
   },
 
@@ -229,6 +267,12 @@ export default {
       this.stats.lives = livesLeft <= 0 ? 0 : livesLeft
       this.levelStatus.finished = true
       this.levelStatus.failed = true
+      if (this.stats.lives) {
+        this.dropdownItems = []
+        for (let i = this.stats.level - 1; i > 0; i--) {
+          this.dropdownItems.push(i)
+        }
+      }
     },
     resetLevelStatus () {
       this.levelStatus.finished = false
@@ -258,6 +302,21 @@ export default {
     playFromBeginning () {
       this.stats.lives = 1
       this.stats.level = 1
+    },
+    choosePlayer () {
+
+    },
+    rejectButtonClicked () {
+      if (this.levelStatus.finished) this.resetLevelStatus()
+      if (this.choosePlayerPopupOpened) this.choosePlayerPopupOpened = false
+    },
+    confirmButtonClicked () {
+      if (this.levelStatus.finished) this.continuePlaying()
+      if (this.choosePlayerPopupOpened) this.choosePlayer()
+    },
+    selectedDropdownValue (value) {
+      if (this.levelStatus.finished) this.selectedLevel = value
+      if (this.choosePlayerPopupOpened) this.player = value
     }
   }
 }
@@ -270,14 +329,31 @@ export default {
   font-family: sans-serif;
   color: $font_color;
   width: 100%;
-  .heading {
-    color: $black;
-    @include fontSizeRem(20, 40);
-    font-weight: 900;
-    text-align: center;
+  header {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
     padding: 1rem;
     @include breakpoint(desktop) {
+      flex-direction: row;
       padding: 2rem;
+    }
+    .heading {
+      color: $black;
+      @include fontSizeRem(20, 40);
+      font-weight: 900;
+      @include breakpoint(desktop) {
+        position: relative;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+    }
+    .menu {
+      margin-top: 1rem;
+      @include breakpoint(desktop) {
+        margin-top: 0;
+      }
     }
   }
   .global-wrapper {
@@ -319,7 +395,7 @@ export default {
       margin-bottom: 4rem;
     }
   }
-  .select-level {
+  .select {
     display: flex;
     align-items: center;
     margin-top: -1rem;
@@ -331,6 +407,27 @@ export default {
     span {
       @include fontSizeRem(12, 20);
       margin-right: 1rem;
+    }
+  }
+  .input {
+    display: flex;
+    align-items: center;
+    margin-top: -.5rem;
+    margin-bottom: 1rem;
+    @include breakpoint(desktop) {
+      margin-top: -1.5rem;
+      margin-bottom: 3rem;
+    }
+    span {
+      @include fontSizeRem(12, 20);
+      margin-right: 1rem;
+    }
+    input {
+      @include fontSizeRem(12, 20);
+      border: 1px solid $blue;
+      border-radius: 5px;
+      background-color: transparent;
+      padding: .5rem;
     }
   }
   .fade-enter-active, .fade-leave-active {
