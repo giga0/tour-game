@@ -40,9 +40,14 @@ export default {
     }
   },
 
-  created () {
-    this.selected = this.items[0]
-    this.$emit('selected', this.selected)
+  watch: {
+    items: {
+      handler () {
+        this.selected = this.items[0]
+        this.$emit('selected', this.selected)
+      },
+      immediate: true
+    }
   },
 
   methods: {

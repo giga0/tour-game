@@ -44,7 +44,7 @@ export default {
 @import '../assets/style/settings/_module-settings';
 
 .box {
-  flex: 1 0 20%;
+  flex: 1 0 10%;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -52,8 +52,7 @@ export default {
   outline: 1px solid $dark_grey;
   transition: background-color .2s ease-in-out;
   @include breakpoint(desktop) {
-    // height: 10.12rem;
-    height: 20.24rem;
+    height: 7.483rem;
   }
   svg {
     display: none;

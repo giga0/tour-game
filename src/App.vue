@@ -45,18 +45,26 @@
         <p class="popup-text">{{ popupText }}</p>
         <transition name="fade">
           <div
-            v-if="dropdownItems.length && !createdPlayer"
+            v-if="dropdown.items.length && !createdPlayer"
             class="select">
-            <span>Choose:</span>
-            <dropdown
-              :items="dropdownItems"
-              @selected="dropdownSelected = $event" />
+            <div>
+              <span class="label">Choose:</span>
+              <dropdown
+                :items="dropdown.items"
+                @selected="dropdownSelected($event)" />
+            </div>
+            <div v-if="choosePlayerPopupOpened && startLevelChoice.levels.length">
+              <span class="label">Level to play:</span>
+              <dropdown
+                :items="startLevelChoice.levels"
+                @selected="startLevelChoice.choosen = $event" />
+            </div>
           </div>
         </transition>
         <div
           v-if="choosePlayerPopupOpened"
           class="input">
-          <span>Create new:</span>
+          <span class="label">Create new:</span>
           <input
             v-model="createdPlayer"
             type="text" />
@@ -81,10 +89,14 @@ import Btn from './components/Button'
 const idb = new IndexedDB([ 'players', 'scores' ])
 
 const cloneDeep = require('lodash.clonedeep')
+const boardSize = 10
 
 export default {
   name: 'App',
 
+  //------------//
+  // COMPONENTS //
+  //------------//
   components: {
     Box,
     GameStats,
@@ -93,6 +105,9 @@ export default {
     Btn
   },
   
+  //------//
+  // DATA //
+  //------//
   data () {
     return {
       board: null,
@@ -109,8 +124,14 @@ export default {
         lives: 1,
         level: 1
       },
-      dropdownItems: [],
-      dropdownSelected: null,
+      dropdown: {
+        items: [],
+        selected: null
+      },
+      startLevelChoice: {
+        levels: [],
+        choosen: null
+      },
       createdPlayer: null,
       choosePlayerPopupOpened: false,
       players: null,
@@ -118,6 +139,9 @@ export default {
     }
   },
 
+  //----------//
+  // COMPUTED //
+  //----------//
   computed: {
     popupHeader () {
       let header = ''
@@ -168,11 +192,17 @@ export default {
     }
   },
 
+  //---------//
+  // CREATED //
+  //---------//
   created () {
-    this.board = this.generateBoard(5)
+    this.board = this.generateBoard(boardSize)
     this.getPlayers()
   },
 
+  //---------//
+  // METHODS //
+  //---------//
   methods: {
     getPlayers () {
       return new Promise(resolve => {
@@ -233,7 +263,7 @@ export default {
     },
     generateStepsBasedOnLevel (level, boxPosition) {
       let boxPositionClone = cloneDeep(boxPosition)
-      const tour = calculateTour(this.board.length, boxPosition)
+      const tour = calculateTour(boardSize, level, boxPosition)
       tour.shift()
       // loop through levels and generate steps accordingly
       for (let i = 0; i < level; i++) {
@@ -284,7 +314,7 @@ export default {
       this.levelStatus.failed = true
       if (this.stats.lives) {
         for (let i = this.stats.level - 1; i > 0; i--) {
-          this.dropdownItems.push({ value: i })
+          this.dropdown.items.push({ value: i })
         }
       }
       if (this.activePlayer) this.updatePlayerData()
@@ -303,7 +333,7 @@ export default {
       this.stats.leftToClick = 0
       this.stats.timer = 0
       this.start = true
-      this.board = this.generateBoard(5)
+      this.board = this.generateBoard(boardSize)
       this.resetLevelStatus()
     },
     playNextLevel () {
@@ -311,28 +341,38 @@ export default {
       this.stats.level++
     },
     playSelectedLevel () {
-      this.stats.level = this.dropdownSelected.value
-      this.dropdownSelected = null
+      this.stats.level = this.dropdown.selected.value
+      this.dropdown.selected = null
     },
     playFromBeginning () {
       this.stats.lives = 1
       this.stats.level = 1
     },
+    dropdownSelected (item) {
+      this.dropdown.selected = item
+      if (this.choosePlayerPopupOpened) {
+        const player = this.getPlayer(item.id)
+        this.startLevelChoice.levels = []
+        for (let i = player.level; i > 0; i--) {
+          this.startLevelChoice.levels.push({ value: i })
+        }
+      }
+    },
     choosePlayer () {
       for (let player of this.players) {
-        this.dropdownItems.push({ id: player.id, value: player.name })
+        this.dropdown.items.push({ id: player.id, value: player.name })
       }
       this.choosePlayerPopupOpened = true
     },
     playerChoosen () {
       if (this.createdPlayer) this.createNewPlayer()
       else {
-        this.activePlayer = this.getPlayer(this.dropdownSelected.id)
+        this.activePlayer = this.getPlayer(this.dropdown.selected.id)
         this.stats.lives = this.activePlayer.lives
         this.stats.level = this.activePlayer.level
       }
       this.choosePlayerPopupOpened = false
-      this.dropdownSelected = null
+      this.dropdown.selected = null
       this.createdPlayer = null
       this.continuePlaying()
     },
@@ -372,12 +412,14 @@ export default {
     rejectButtonClicked () {
       if (this.levelStatus.finished) this.resetLevelStatus()
       if (this.choosePlayerPopupOpened) this.choosePlayerPopupOpened = false
-      this.dropdownItems = []
+      this.dropdown.items = []
+      this.startLevelChoice.levels = []
     },
     confirmButtonClicked () {
       if (this.levelStatus.finished) this.continuePlaying()
       if (this.choosePlayerPopupOpened) this.playerChoosen()
-      this.dropdownItems = []
+      this.dropdown.items = []
+      this.startLevelChoice.levels = []
     }
   }
 }
@@ -390,6 +432,8 @@ export default {
   font-family: sans-serif;
   color: $font_color;
   width: 100%;
+  max-width: 144rem;
+  margin: 0 auto;
   header {
     display: flex;
     flex-direction: column;
@@ -430,7 +474,7 @@ export default {
     padding: 1rem;
     @include breakpoint(desktop) {
       flex-direction: row;
-      padding: 4rem;
+      padding: 2rem;
     }
   }
   .game-wrapper {
@@ -465,6 +509,7 @@ export default {
   }
   .select {
     display: flex;
+    justify-content: space-between;
     align-items: center;
     margin-top: -1rem;
     margin-bottom: 1rem;
@@ -472,9 +517,11 @@ export default {
       margin-top: -2.5rem;
       margin-bottom: 3rem;
     }
-    span {
+    .label {
       @include fontSizeRem(12, 20);
+      display: inline-block;
       margin-right: 1rem;
+      margin-bottom: .5rem;
     }
   }
   .input {
@@ -486,7 +533,7 @@ export default {
       margin-top: -2rem;
       margin-bottom: 3rem;
     }
-    span {
+    .label {
       @include fontSizeRem(12, 20);
       margin-right: 1rem;
     }

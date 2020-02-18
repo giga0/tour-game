@@ -32,9 +32,9 @@ button {
     background-color: $dark_grey;
   }
   @include breakpoint(desktop) {
-    padding: 1.2rem;
+    padding: 1rem;
     &:not(:disabled):hover {
-      box-shadow: 0 3px 6px 0 rgba(0, 0, 0, 0.3);
+      box-shadow: 0 3px 6px 0 rgba(0, 0, 0, .3);
     }
   }
 }
