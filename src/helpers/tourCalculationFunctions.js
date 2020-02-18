@@ -15,7 +15,13 @@ export function getPossibleSteps (board, position) {
     [position[0] - 2, position[1] + 2]
   ]
 
-  // Filter out all steps that go beyond the board.
+  // shuffle steps for tour solution to be more interesting
+  for (let i = possibleSteps.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [possibleSteps[i], possibleSteps[j]] = [possibleSteps[j], possibleSteps[i]]
+  }
+
+  // filter out all steps that go beyond the board
   return possibleSteps.filter(step => {
     const boardSize = board.length
     return step[0] >= 0 && step[1] >= 0 && step[0] < boardSize && step[1] < boardSize
@@ -27,7 +33,7 @@ export function getPossibleSteps (board, position) {
  * @param {number[]} step
  * @return {boolean}
  */
-function isMoveAllowed(board, step) {
+function isMoveAllowed (board, step) {
   return board[step[0]][step[1]] !== 1
 }
 
@@ -36,7 +42,7 @@ function isMoveAllowed(board, step) {
  * @param {number[][]} steps
  * @return {boolean}
  */
-function isBoardCompletelyVisited(board, steps) {
+function isBoardCompletelyVisited (board, steps) {
   const totalPossibleStepsCount = board.length ** 2
   const existingStepsCount = steps.length
 
@@ -45,40 +51,31 @@ function isBoardCompletelyVisited(board, steps) {
 
 /**
  * @param {number[][]} board
+ * @param {number} level
  * @param {number[][]} steps
  * @return {boolean}
  */
-function tourRecursive(board, steps) {
-  const currentBoard = board
-
-  if (isBoardCompletelyVisited(currentBoard, steps)) {
+function tourRecursive (board, level, steps) {
+  // check if number of steps for level is reached or if board is completely visited
+  if (level === steps.length - 1 || isBoardCompletelyVisited(board, steps)) {
     return true
   }
 
-  // Get next possible steps.
+  // get next possible steps
   const lastStep = steps[steps.length - 1]
-  const possibleSteps = getPossibleSteps(currentBoard, lastStep)
+  const possibleSteps = getPossibleSteps(board, lastStep)
 
-  // Try to do next possible moves.
-  for (let stepIndex = 0; stepIndex < possibleSteps.length; stepIndex += 1) {
-    const currentStep = possibleSteps[stepIndex]
-
-    // Check if current move is allowed. We aren't allowed to go to
-    // the same cells twice.
-    if (isMoveAllowed(currentBoard, currentStep)) {
-      steps.push(currentStep)
-      currentBoard[currentStep[0]][currentStep[1]] = 1
-
-      // If further moves starting from current are successful then
-      // return true meaning the solution is found.
-      if (tourRecursive(currentBoard, steps)) {
+  // try to do next possible moves
+  for (let step of possibleSteps) {
+    // check if current move is allowed
+    // we aren't allowed to go to the same cells twice
+    if (isMoveAllowed(board, step)) {
+      steps.push(step)
+      board[step[0]][step[1]] = 1
+  
+      if (tourRecursive(board, level, steps)) {
         return true
       }
-
-      // BACKTRACKING.
-      // If current move was unsuccessful then step back and try to do another move.
-      steps.pop()
-      currentBoard[currentStep[0]][currentStep[1]] = 0
     }
   }
 
@@ -87,10 +84,11 @@ function tourRecursive(board, steps) {
 
 /**
  * @param {number} boardSize
+ * @param {number} level
  * @param {number[][]} firstStep
  * @return {number[][]}
  */
-export function calculateTour(boardSize, firstStep) {
+export function calculateTour (boardSize, level, firstStep) {
   const board = Array(boardSize).fill(null).map(() => Array(boardSize).fill(0))
 
   const steps = []
@@ -98,7 +96,7 @@ export function calculateTour(boardSize, firstStep) {
   steps.push(firstStep)
   board[firstStep[0]][firstStep[1]] = 1
 
-  const solutionWasFound = tourRecursive(board, steps)
+  const solutionWasFound = tourRecursive(board, level, steps)
 
   return solutionWasFound ? steps : []
 }
