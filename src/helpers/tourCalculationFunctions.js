@@ -3,7 +3,7 @@
  * @param {number[]} position
  * @return {number[][]}
  */
-export function getPossibleSteps (board, position) {
+export function getPossibleSteps (board, position, shuffle = false) {
   const possibleSteps = [
     [position[0] - 3, position[1]],
     [position[0] + 3, position[1]],
@@ -15,10 +15,12 @@ export function getPossibleSteps (board, position) {
     [position[0] - 2, position[1] + 2]
   ]
 
-  // shuffle steps for tour solution to be more interesting
-  for (let i = possibleSteps.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [possibleSteps[i], possibleSteps[j]] = [possibleSteps[j], possibleSteps[i]]
+  if (shuffle) {
+    // shuffle steps for tour solution to be more interesting
+    for (let i = possibleSteps.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [possibleSteps[i], possibleSteps[j]] = [possibleSteps[j], possibleSteps[i]]
+    }
   }
 
   // filter out all steps that go beyond the board
@@ -63,7 +65,7 @@ function tourRecursive (board, level, steps) {
 
   // get next possible steps
   const lastStep = steps[steps.length - 1]
-  const possibleSteps = getPossibleSteps(board, lastStep)
+  const possibleSteps = getPossibleSteps(board, lastStep, true)
 
   // try to do next possible moves
   for (let step of possibleSteps) {

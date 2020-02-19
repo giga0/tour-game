@@ -5,7 +5,7 @@
       <h1 class="heading">Tour Game</h1>
       <div class="menu">
         <p>
-          Player: {{ activePlayer ? activePlayer.name : '/' }}
+          Player: {{ activePlayer ? activePlayer.name : '---' }}
         </p>
         <btn
           @click="choosePlayer">
@@ -77,6 +77,7 @@
 <script>
 /* eslint-disable */
 import IndexedDB from './api/idb'
+import config from './basic.config'
 
 import { getPossibleSteps, calculateTour } from './helpers/tourCalculationFunctions'
 
@@ -122,7 +123,7 @@ export default {
         timer: 0,
         leftToClick: 0,
         lives: 1,
-        level: 1
+        level: config.startLevel
       },
       dropdown: {
         items: [],
@@ -314,8 +315,9 @@ export default {
       this.levelStatus.failed = true
       if (this.stats.lives) {
         for (let i = this.stats.level - 1; i > 0; i--) {
-          this.dropdown.items.push({ value: i })
+          if (i >= config.startLevel) this.dropdown.items.push({ value: i })
         }
+        if (!this.dropdown.items.length) this.dropdown.items.push({ value: config.startLevel })
       }
       if (this.activePlayer) this.updatePlayerData()
     },
@@ -346,16 +348,17 @@ export default {
     },
     playFromBeginning () {
       this.stats.lives = 1
-      this.stats.level = 1
+      this.stats.level = config.startLevel
     },
     dropdownSelected (item) {
       this.dropdown.selected = item
       if (this.choosePlayerPopupOpened) {
-        const player = this.getPlayer(item.id)
         this.startLevelChoice.levels = []
+        const player = this.getPlayer(item.id)
         for (let i = player.level; i > 0; i--) {
-          this.startLevelChoice.levels.push({ value: i })
+          if (i >= config.startLevel) this.startLevelChoice.levels.push({ value: i })
         }
+        if (!this.startLevelChoice.levels.length) this.startLevelChoice.levels.push({ value: config.startLevel })
       }
     },
     choosePlayer () {
@@ -369,7 +372,7 @@ export default {
       else {
         this.activePlayer = this.getPlayer(this.dropdown.selected.id)
         this.stats.lives = this.activePlayer.lives
-        this.stats.level = this.activePlayer.level
+        this.stats.level = this.startLevelChoice.choosen.value
       }
       this.choosePlayerPopupOpened = false
       this.dropdown.selected = null
@@ -380,7 +383,7 @@ export default {
       const payload = {
         name: this.createdPlayer,
         lives: 1,
-        level: 1
+        level: config.startLevel
       }
       idb.saveData('players', payload).then(id => {
         this.getPlayers().then(() => {
@@ -403,7 +406,7 @@ export default {
       }
       if (this.levelStatus.failed) {
         payload.lives = payload.lives || 1
-        payload.level = this.stats.lives ? payload.level : 1
+        payload.level = this.stats.lives ? payload.level : config.startLevel
       }
       idb.updateData('players', payload).then(() => {
         this.getPlayers()
@@ -512,9 +515,9 @@ export default {
     justify-content: space-between;
     align-items: center;
     margin-top: -1rem;
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
     @include breakpoint(desktop) {
-      margin-top: -2.5rem;
+      margin-top: -2rem;
       margin-bottom: 3rem;
     }
     .label {
@@ -528,9 +531,9 @@ export default {
     display: flex;
     align-items: center;
     margin-top: -.5rem;
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
     @include breakpoint(desktop) {
-      margin-top: -2rem;
+      margin-top: -1rem;
       margin-bottom: 3rem;
     }
     .label {
