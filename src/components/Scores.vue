@@ -110,7 +110,7 @@ export default {
     tbody {
       display: block;
       height: 18rem;
-      overflow: auto;
+      overflow-y: auto;
       border: 1px solid $light_gray;
       border-radius: 5px;
       &::-webkit-scrollbar {
@@ -123,7 +123,7 @@ export default {
         background-color: #e8e8e8;
       }
       @include breakpoint(desktop) {
-        height: 39rem;
+        height: 40rem;
         &::-webkit-scrollbar {
           width: .5rem;
         }
