@@ -1,4 +1,4 @@
 export default {
   // startLevel should be Number
-  startLevel: 5
+  startLevel: 1
 }

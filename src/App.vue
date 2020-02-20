@@ -212,7 +212,7 @@ export default {
     this.getPlayers()
     this.getScores()
 
-    // function that handles popup list visibility
+    // function that handles popup(list) visibility
     // within ScoreRow and Dropdown components
     const popupListVisibility = e => {
       const target = e.target
@@ -318,8 +318,8 @@ export default {
     },
     startTimer () {
       const timer = () => {
-        this.stats.timer++
         if (this.levelStatus.finished) clearInterval(interval)
+        else this.stats.timer++
       }
       const interval = setInterval(timer, 1000)
     },
