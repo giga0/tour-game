@@ -2,16 +2,12 @@
   <div
     v-if="items.length"
     class="dropdown">
-    <div
-      class="wrapper"
-      @click="onClick">
+    <div class="dropdown-wrapper">
       <button class="selected">
         <span>{{ selected.value }}</span>
         <div class="triangle"></div>
       </button>
-      <div
-        ref="list"
-        class="list">
+      <div class="list">
         <ul>
           <li
             v-for="(item, index) in items"
@@ -35,8 +31,7 @@ export default {
 
   data () {
     return {
-      selected: null,
-      listIsVisible: false
+      selected: null
     }
   },
 
@@ -51,9 +46,6 @@ export default {
   },
 
   methods: {
-    onClick () {
-      this.$refs.list.classList.toggle('is-visible')
-    },
     selectLevel (item) {
       this.selected = item
       this.$emit('selected', this.selected)
@@ -66,19 +58,25 @@ export default {
 @import '../assets/style/settings/_module-settings';
 
 .dropdown {
-  .wrapper {
+  &-wrapper {
     position: relative;
     width: 10.8rem;
     margin: 0 auto;
     @include breakpoint(desktop) {
       width: 18.3rem;
     }
+    &.is-visible {
+      .list {
+        visibility: visible;
+        opacity: 1;
+      }
+    }
   }
   .selected {
     display: inline-flex;
     justify-content: space-between;
     align-items: center;
-    border-radius: 6px;
+    border-radius: 5px;
     background-color: rgba(36, 41, 55, .1);
     width: 10.8rem;
     padding: .3rem 1rem;
@@ -118,18 +116,14 @@ export default {
     overflow: hidden;
     width: 10.8rem;
     position: absolute;
-    bottom: -.5rem;
-    border-radius: 9px;
+    bottom: 0;
+    border-radius: 5px;
     box-shadow: 0 4px 8px 0 rgba(36, 41, 56, 0.1);
     border: 1px solid $dark_grey;
     background-color: $white;
     transition: all .25s ease-in-out;
     @include breakpoint(desktop) {
       width: 18.3rem;
-    }
-    &.is-visible {
-      visibility: visible;
-      opacity: 1;
     }
     ul {
       overflow-y: auto;
@@ -138,23 +132,27 @@ export default {
       background-color: $white;
       max-height: 15rem;
       padding: 1rem 1.5rem;
-      @include breakpoint(desktop) {
-        max-height: 25rem;
-      }
       &::-webkit-scrollbar {
-        width: .4rem;
+        width: .3rem;
         background-color: $white;
       }
       &::-webkit-scrollbar-thumb {
-        width: .4rem;
+        width: .3rem;
         border-radius: 2px;
         background-color: #e8e8e8;
       }
+      @include breakpoint(desktop) {
+        max-height: 25rem;
+        &::-webkit-scrollbar {
+          width: .5rem;
+        }
+        &::-webkit-scrollbar-thumb {
+          width: .5rem;
+        }
+      }
       li {
         @include fontSizeRem(12, 18);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+        text-align: center;
         margin-bottom: 1.5rem;
         cursor: pointer;
         &:last-child {
