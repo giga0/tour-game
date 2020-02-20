@@ -52,7 +52,7 @@ export default {
   outline: 1px solid $dark_grey;
   transition: background-color .2s ease-in-out;
   @include breakpoint(desktop) {
-    height: 7.483rem;
+    height: 7.7rem;
   }
   svg {
     display: none;
