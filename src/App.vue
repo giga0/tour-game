@@ -24,12 +24,15 @@
               :key="`v${vIndex}_h${hIndex}`"
               :item="item"
               :start="start"
-              @click="boxClicked(item, [vIndex, hIndex])"/>
+              @click="boxClicked(item, [vIndex, hIndex])" />
           </template>
         </div>
         <game-stats :stats="stats" />
       </div>
       <div class="score-wrapper">
+        <scores
+          v-if="scores"
+          :scores="scores"/>
       </div>
     </main>
     <!-- Global popup -->
@@ -83,6 +86,7 @@ import { getPossibleSteps, calculateTour } from './helpers/tourCalculationFuncti
 
 import Box from './components/Box'
 import GameStats from './components/GameStats'
+import Scores from './components/Scores'
 import Popup from './components/Popup'
 import Dropdown from './components/Dropdown'
 import Btn from './components/Button'
@@ -101,6 +105,7 @@ export default {
   components: {
     Box,
     GameStats,
+    Scores,
     Popup,
     Dropdown,
     Btn
@@ -136,7 +141,8 @@ export default {
       createdPlayer: null,
       choosePlayerPopupOpened: false,
       players: null,
-      activePlayer: null
+      activePlayer: null,
+      initialScores: null
     }
   },
 
@@ -190,6 +196,11 @@ export default {
         buttons.confirm.text = 'Confirm'
       }
       return buttons
+    },
+    scores () {
+      let scores = this.initialScores
+      if (this.activePlayer) scores = this.initialScores.filter(score => score.player.id === this.activePlayer.id)
+      return scores
     }
   },
 
@@ -199,6 +210,28 @@ export default {
   created () {
     this.board = this.generateBoard(boardSize)
     this.getPlayers()
+    this.getScores()
+
+    // function that handles popup list visibility
+    // within ScoreRow and Dropdown components
+    const popupListVisibility = e => {
+      const target = e.target
+      const visiblePopup = document.getElementsByClassName('is-visible')[0]
+      if (visiblePopup && !target.classList.contains('is-visible') && !target.offsetParent.classList.contains('is-visible')) {
+        visiblePopup.classList.remove('is-visible')
+      }
+      if (target.classList.contains('time--more')) {
+        target.classList.toggle('is-visible')
+      }
+      if (target.offsetParent && target.offsetParent.classList.contains('dropdown-wrapper')) {
+        target.offsetParent.classList.toggle('is-visible')
+      }
+    }
+
+    document.addEventListener('click', popupListVisibility)
+    this.$on('hook:beforeDestroy', () => {
+      document.removeEventListener('click', popupListVisibility)
+    })
   },
 
   //---------//
@@ -215,6 +248,11 @@ export default {
     },
     getPlayer (id) {
       return this.players.find(player => player.id === id)
+    },
+    getScores () {
+      idb.getStore('scores').then(scores => {
+        this.initialScores = scores
+      })
     },
     generateBoard (size) {
       const board = []
@@ -306,7 +344,10 @@ export default {
     levelCompleted () {
       this.levelStatus.finished = true
       this.levelStatus.completed = true
-      if (this.activePlayer) this.updatePlayerData()
+      if (this.activePlayer) {
+        this.saveScore()
+        this.updatePlayerData()
+      }
     },
     levelFailed () {
       const livesLeft = this.stats.lives - this.stats.leftToClick
@@ -412,6 +453,19 @@ export default {
         this.getPlayers()
       })
     },
+    saveScore () {
+      const payload = {
+        player: {
+          id: this.activePlayer.id,
+          name: this.activePlayer.name
+        },
+        level: this.stats.level,
+        time: this.stats.timer
+      }
+      idb.saveData('scores', payload).then(() => {
+        this.getScores()
+      })
+    },
     rejectButtonClicked () {
       if (this.levelStatus.finished) this.resetLevelStatus()
       if (this.choosePlayerPopupOpened) this.choosePlayerPopupOpened = false
@@ -485,6 +539,11 @@ export default {
   }
   .score-wrapper {
     flex: 1 0 45%;
+    margin-top: 3rem;
+    @include breakpoint(desktop) {
+      padding: 0 2rem;
+      margin-top: 2rem;
+    }
   }
   .board {
     display: flex;
