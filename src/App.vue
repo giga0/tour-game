@@ -301,19 +301,13 @@ export default {
       this.startTimer()
     },
     generateStepsBasedOnLevel (level, boxPosition) {
-      let boxPositionClone = cloneDeep(boxPosition)
       const tour = calculateTour(boardSize, level, boxPosition)
       tour.shift()
-      // loop through levels and generate steps accordingly
-      for (let i = 0; i < level; i++) {
-        for (let step of tour) {
-          const boardItem = this.board[step[0]][step[1]]
-          if (boardItem.is_set) continue
-          boardItem.is_set = true
-          boardItem.currentStatus.future_step = true
-          boxPositionClone = [step[0], step[1]]
-          break
-        }
+      // generate steps based on tour/level
+      for (let step of tour) {
+        const boardItem = this.board[step[0]][step[1]]
+        boardItem.is_set = true
+        boardItem.currentStatus.future_step = true
       }
     },
     startTimer () {
