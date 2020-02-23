@@ -93,7 +93,6 @@ import Btn from './components/Button'
 
 const idb = new IndexedDB([ 'players', 'scores' ])
 
-const cloneDeep = require('lodash.clonedeep')
 const boardSize = 10
 
 export default {
