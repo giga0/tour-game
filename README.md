@@ -1,5 +1,9 @@
 # tour-game
 
+### Demo
+###### CodeSandbox: https://codesandbox.io/s/github/giga0/tour-game
+###### Full screen: https://symmf.csb.app/
+
 ### Project setup (i.e. How to install this game)
 Clone repository:
 ```
