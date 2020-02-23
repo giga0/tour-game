@@ -277,6 +277,7 @@ export default {
 
       // you stepped on the box
       box.currentStatus.stepped_on = true
+      box.currentStatus.can_be_stepped = false
       this.stats.leftToClick--
 
       // if there is no more boxes left to click
@@ -294,20 +295,10 @@ export default {
     },
     startLevel (box, position) {
       this.start = false
-      box.is_set = true
       this.stats.leftToClick = this.stats.level + 1
-      this.generateStepsBasedOnLevel(this.stats.level, position)
+      // modify board based on calculated tour steps
+      calculateTour(this.board, this.stats.level, position)
       this.startTimer()
-    },
-    generateStepsBasedOnLevel (level, boxPosition) {
-      const tour = calculateTour(boardSize, level, boxPosition)
-      tour.shift()
-      // generate steps based on tour/level
-      for (let step of tour) {
-        const boardItem = this.board[step[0]][step[1]]
-        boardItem.is_set = true
-        boardItem.currentStatus.future_step = true
-      }
     },
     startTimer () {
       const timer = () => {

@@ -1,5 +1,5 @@
 /**
- * @param {number[][]} board
+ * @param {object[][]} board
  * @param {number[]} position
  * @return {number[][]}
  */
@@ -31,16 +31,16 @@ export function getPossibleSteps (board, position, shuffle = false) {
 }
 
 /**
- * @param {number[][]} board
+ * @param {object[][]} board
  * @param {number[]} step
  * @return {boolean}
  */
 function isMoveAllowed (board, step) {
-  return board[step[0]][step[1]] !== 1
+  return !board[step[0]][step[1]].is_set
 }
 
 /**
- * @param {number[][]} board
+ * @param {object[][]} board
  * @param {number[][]} steps
  * @return {boolean}
  */
@@ -52,7 +52,7 @@ function isBoardCompletelyVisited (board, steps) {
 }
 
 /**
- * @param {number[][]} board
+ * @param {object[][]} board
  * @param {number} level
  * @param {number[][]} steps
  * @return {boolean}
@@ -73,7 +73,8 @@ function tourRecursive (board, level, steps) {
     // we aren't allowed to go to the same cells twice
     if (isMoveAllowed(board, step)) {
       steps.push(step)
-      board[step[0]][step[1]] = 1
+      board[step[0]][step[1]].is_set = true
+      board[step[0]][step[1]].currentStatus.future_step = true
   
       if (tourRecursive(board, level, steps)) {
         return true
@@ -85,18 +86,16 @@ function tourRecursive (board, level, steps) {
 }
 
 /**
- * @param {number} boardSize
+ * @param {object[][]} board
  * @param {number} level
  * @param {number[][]} firstStep
  * @return {number[][]}
  */
-export function calculateTour (boardSize, level, firstStep) {
-  const board = Array(boardSize).fill(null).map(() => Array(boardSize).fill(0))
-
+export function calculateTour (board, level, firstStep) {
   const steps = []
 
   steps.push(firstStep)
-  board[firstStep[0]][firstStep[1]] = 1
+  board[firstStep[0]][firstStep[1]].is_set = true
 
   const solutionWasFound = tourRecursive(board, level, steps)
 
