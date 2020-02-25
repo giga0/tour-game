@@ -54,10 +54,12 @@ export default {
       // loop through scores and group them by level
       for (let score of this.scores) {
         const level = score.level
-        if (!scoresByLevel[level]) scoresByLevel[level] = []
+        if (!scoresByLevel[level]) {
+          scoresByLevel[level] = []
+        }
         scoresByLevel[level].push(score)
         // sort scores by time
-        scoresByLevel[level].sort(function(a, b) { 
+        scoresByLevel[level].sort((a, b) => { 
           return a.time - b.time
         })
       }
@@ -71,9 +73,13 @@ export default {
       for (let level in scoresByLevel) {
         for (let score of scoresByLevel[level]) {
           const testProp = `id_${score.player.id}[${score.player.name}]`
-          if (!scoresByLevelPerPlayer[level]) scoresByLevelPerPlayer[level] = {}
+          if (!scoresByLevelPerPlayer[level]) {
+            scoresByLevelPerPlayer[level] = {}
+          }
           // group them additionaly per player
-          if (!scoresByLevelPerPlayer[level][testProp]) scoresByLevelPerPlayer[level][testProp] = []
+          if (!scoresByLevelPerPlayer[level][testProp]) {
+            scoresByLevelPerPlayer[level][testProp] = []
+          }
           scoresByLevelPerPlayer[level][testProp].push(score)
         }
       }

@@ -6,13 +6,13 @@
       <slot />
       <div class="buttons">
         <btn
-          v-if="buttons.reject.is_visible"
+          v-if="buttons.reject.isVisible"
           color="#f33558"
           @click="$emit('reject')">
           {{ buttons.reject.text }}
         </btn>
         <btn
-          v-if="buttons.confirm.is_visible"
+          v-if="buttons.confirm.isVisible"
           color="#298c29"
           @click="$emit('confirm')">
           {{ buttons.confirm.text }}

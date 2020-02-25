@@ -80,7 +80,6 @@
 <script>
 /* eslint-disable */
 import IndexedDB from './api/idb'
-import config from './basic.config'
 
 import { getPossibleSteps, calculateTour } from './helpers/tourCalculationFunctions'
 
@@ -93,6 +92,7 @@ import Btn from './components/Button'
 
 const idb = new IndexedDB([ 'players', 'scores' ])
 
+const startLevel = parseInt(process.env.VUE_APP_START_LEVEL)
 const boardSize = 10
 
 export default {
@@ -127,7 +127,7 @@ export default {
         timer: 0,
         leftToClick: 0,
         lives: 1,
-        level: config.startLevel
+        level: startLevel
       },
       dropdown: {
         items: [],
@@ -150,41 +150,53 @@ export default {
   //----------//
   computed: {
     popupHeader () {
-      let header = ''
       if (this.levelStatus.finished) {
-        if (this.levelStatus.completed) header = `You have completed level: ${this.stats.level}`
+        if (this.levelStatus.completed) {
+          return `You have completed level: ${this.stats.level}`
+        }
         if (this.levelStatus.failed) {
-          if (this.stats.lives) header = `You failed to complete the level: ${this.stats.level}`
-          else header = 'End game'
+          if (this.stats.lives) {
+            return `You failed to complete the level: ${this.stats.level}`
+          } else {
+            return 'End game'
+          }
         }
       }
-      if (this.choosePlayerPopupOpened) header = 'Choose player'
-      return header
+      if (this.choosePlayerPopupOpened) {
+        return 'Choose player'
+      }
     },
     popupHeaderClass () {
-      let styleClass = ''
       if (this.levelStatus.finished) {
-        if (this.levelStatus.completed) styleClass = 'success'
-        if (this.levelStatus.failed) styleClass = 'fail'
-      }
-      return styleClass
-    },
-    popupText () {
-      let text = ''
-      if (this.levelStatus.finished) {
-        if (this.levelStatus.completed) text = 'Do you want to play next level?'
+        if (this.levelStatus.completed) {
+          return 'success'
+        }
         if (this.levelStatus.failed) {
-          if (this.stats.lives) text = 'Do you want to try again?'
-          else text = 'You have lost this game. Do you want to play again?'
+          return 'fail'
         }
       }
-      if (this.choosePlayerPopupOpened) text = 'You can choose existing or create a new player.'
-      return text
+    },
+    popupText () {
+      if (this.levelStatus.finished) {
+        if (this.levelStatus.completed) {
+          return 'Do you want to play next level?'
+        }
+        if (this.levelStatus.failed) {
+          if (this.stats.lives) {
+            return 'Do you want to try again?'
+          } else {
+            return 'You have lost this game. Do you want to play again?'
+          }
+        }
+      }
+      if (this.choosePlayerPopupOpened) {
+        return 'You can choose existing or create a new player.'
+      }
     },
     popupButtons () {
       const buttons = {
-        reject: { text: '', is_visible: true },
-        confirm: { text: '', is_visible: true }
+        reject: { text: '', isVisible: true },
+        confirm: { text: '', isVisible: true }
       }
       if (this.levelStatus.finished) {
         buttons.reject.text = 'No'
@@ -198,7 +210,9 @@ export default {
     },
     scores () {
       let scores = this.initialScores
-      if (this.activePlayer) scores = this.initialScores.filter(score => score.player.id === this.activePlayer.id)
+      if (this.activePlayer) {
+        scores = this.initialScores.filter(score => score.player.id === this.activePlayer.id)
+      }
       return scores
     }
   },
@@ -237,21 +251,14 @@ export default {
   // METHODS //
   //---------//
   methods: {
-    getPlayers () {
-      return new Promise(resolve => {
-        idb.getStore('players').then(players => {
-          this.players = players
-          resolve()
-        })
-      })
+    async getPlayers () {
+      this.players = await idb.getStore('players')
     },
     getPlayer (id) {
       return this.players.find(player => player.id === id)
     },
-    getScores () {
-      idb.getStore('scores').then(scores => {
-        this.initialScores = scores
-      })
+    async getScores () {
+      this.initialScores = await idb.getStore('scores')
     },
     generateBoard (size) {
       const board = []
@@ -261,11 +268,11 @@ export default {
         // horizontal board setup
         for (let h = 0; h < size; h++) {
           board[v].push({
-            is_set: false,
+            isSet: false,
             currentStatus: {
-              stepped_on: false,
-              can_be_stepped: false,
-              future_step: false
+              steppedOn: false,
+              canBeStepped: false,
+              futureStep: false
             }
           })
         }
@@ -273,11 +280,13 @@ export default {
       return board
     },
     boxClicked (box, position) {
-      if (this.start) this.startLevel(box, position)
+      if (this.start) {
+        this.startLevel(box, position)
+      }
 
       // you stepped on the box
-      box.currentStatus.stepped_on = true
-      box.currentStatus.can_be_stepped = false
+      box.currentStatus.steppedOn = true
+      box.currentStatus.canBeStepped = false
       this.stats.leftToClick--
 
       // if there is no more boxes left to click
@@ -291,7 +300,9 @@ export default {
       this.detectPossibleStepsForNextMove(position)
 
       // if there is no steps to go, player failed
-      if (!this.cachedSteps.length) this.levelFailed()
+      if (!this.cachedSteps.length) {
+        this.levelFailed()
+      }
     },
     startLevel (box, position) {
       this.start = false
@@ -302,16 +313,21 @@ export default {
     },
     startTimer () {
       const timer = () => {
-        if (this.levelStatus.finished) clearInterval(interval)
-        else this.stats.timer++
+        if (this.levelStatus.finished) {
+          clearInterval(interval)
+        } else {
+          this.stats.timer++
+        }
       }
       const interval = setInterval(timer, 1000)
     },
     revertCachedStepsState () {
       for (let item of this.cachedSteps) {
-        if (item.currentStatus.stepped_on) continue
-        item.currentStatus.future_step = true
-        item.currentStatus.can_be_stepped = false
+        if (item.currentStatus.steppedOn) {
+          continue
+        }
+        item.currentStatus.futureStep = true
+        item.currentStatus.canBeStepped = false
       }
       this.cachedSteps = []
     },
@@ -319,9 +335,11 @@ export default {
       const possibleSteps = getPossibleSteps(this.board, position)
       for (let step of possibleSteps) {
         const boardItem = this.board[step[0]][step[1]]
-        if (!boardItem.currentStatus.future_step) continue
-        boardItem.currentStatus.future_step = false
-        boardItem.currentStatus.can_be_stepped = true
+        if (!boardItem.currentStatus.futureStep) {
+          continue
+        }
+        boardItem.currentStatus.futureStep = false
+        boardItem.currentStatus.canBeStepped = true
         this.cachedSteps.push(boardItem)
       }
     },
@@ -340,11 +358,17 @@ export default {
       this.levelStatus.failed = true
       if (this.stats.lives) {
         for (let i = this.stats.level - 1; i > 0; i--) {
-          if (i >= config.startLevel) this.dropdown.items.push({ value: i })
+          if (i >= startLevel) {
+            this.dropdown.items.push({ value: i })
+          }
         }
-        if (!this.dropdown.items.length) this.dropdown.items.push({ value: config.startLevel })
+        if (!this.dropdown.items.length) {
+          this.dropdown.items.push({ value: startLevel })
+        }
       }
-      if (this.activePlayer) this.updatePlayerData()
+      if (this.activePlayer) {
+        this.updatePlayerData()
+      }
     },
     resetLevelStatus () {
       this.levelStatus.finished = false
@@ -352,10 +376,15 @@ export default {
       this.levelStatus.failed = false
     },
     continuePlaying () {
-      if (this.levelStatus.completed) this.playNextLevel()
+      if (this.levelStatus.completed) {
+        this.playNextLevel()
+      }
       if (this.levelStatus.failed) {
-        if (this.stats.lives) this.playSelectedLevel()
-        else this.playFromBeginning()
+        if (this.stats.lives) {
+          this.playSelectedLevel()
+        } else {
+          this.playFromBeginning()
+        }
       }
       this.stats.leftToClick = 0
       this.stats.timer = 0
@@ -373,7 +402,7 @@ export default {
     },
     playFromBeginning () {
       this.stats.lives = 1
-      this.stats.level = config.startLevel
+      this.stats.level = startLevel
     },
     dropdownSelected (item) {
       this.dropdown.selected = item
@@ -381,9 +410,13 @@ export default {
         this.startLevelChoice.levels = []
         const player = this.getPlayer(item.id)
         for (let i = player.level; i > 0; i--) {
-          if (i >= config.startLevel) this.startLevelChoice.levels.push({ value: i })
+          if (i >= startLevel) {
+            this.startLevelChoice.levels.push({ value: i })
+          }
         }
-        if (!this.startLevelChoice.levels.length) this.startLevelChoice.levels.push({ value: config.startLevel })
+        if (!this.startLevelChoice.levels.length) {
+          this.startLevelChoice.levels.push({ value: startLevel })
+        }
       }
     },
     choosePlayer () {
@@ -393,8 +426,9 @@ export default {
       this.choosePlayerPopupOpened = true
     },
     playerChoosen () {
-      if (this.createdPlayer) this.createNewPlayer()
-      else {
+      if (this.createdPlayer) {
+        this.createNewPlayer()
+      } else {
         this.activePlayer = this.getPlayer(this.dropdown.selected.id)
         this.stats.lives = this.activePlayer.lives
         this.stats.level = this.startLevelChoice.choosen.value
@@ -404,21 +438,19 @@ export default {
       this.createdPlayer = null
       this.continuePlaying()
     },
-    createNewPlayer () {
+    async createNewPlayer () {
       const payload = {
         name: this.createdPlayer,
         lives: 1,
-        level: config.startLevel
+        level: startLevel
       }
-      idb.saveData('players', payload).then(id => {
-        this.getPlayers().then(() => {
-          this.activePlayer = this.getPlayer(id)
-          this.stats.lives = this.activePlayer.lives
-          this.stats.level = this.activePlayer.level
-        })
-      })
+      const id = await idb.saveData('players', payload)
+      await this.getPlayers()
+      this.activePlayer = this.getPlayer(id)
+      this.stats.lives = this.activePlayer.lives
+      this.stats.level = this.activePlayer.level
     },
-    updatePlayerData () {
+    async updatePlayerData () {
       const payload = {
         id: this.activePlayer.id,
         name: this.activePlayer.name,
@@ -431,13 +463,12 @@ export default {
       }
       if (this.levelStatus.failed) {
         payload.lives = payload.lives || 1
-        payload.level = this.stats.lives ? payload.level : config.startLevel
+        payload.level = this.stats.lives ? payload.level : startLevel
       }
-      idb.updateData('players', payload).then(() => {
-        this.getPlayers()
-      })
+      await idb.updateData('players', payload)
+      this.getPlayers()
     },
-    saveScore () {
+    async saveScore () {
       const payload = {
         player: {
           id: this.activePlayer.id,
@@ -446,19 +477,26 @@ export default {
         level: this.stats.level,
         time: this.stats.timer
       }
-      idb.saveData('scores', payload).then(() => {
-        this.getScores()
-      })
+      await idb.saveData('scores', payload)
+      this.getScores()
     },
     rejectButtonClicked () {
-      if (this.levelStatus.finished) this.resetLevelStatus()
-      if (this.choosePlayerPopupOpened) this.choosePlayerPopupOpened = false
+      if (this.levelStatus.finished) {
+        this.resetLevelStatus()
+      }
+      if (this.choosePlayerPopupOpened) {
+        this.choosePlayerPopupOpened = false
+      }
       this.dropdown.items = []
       this.startLevelChoice.levels = []
     },
     confirmButtonClicked () {
-      if (this.levelStatus.finished) this.continuePlaying()
-      if (this.choosePlayerPopupOpened) this.playerChoosen()
+      if (this.levelStatus.finished) {
+        this.continuePlaying()
+      }
+      if (this.choosePlayerPopupOpened) {
+        this.playerChoosen()
+      }
       this.dropdown.items = []
       this.startLevelChoice.levels = []
     }

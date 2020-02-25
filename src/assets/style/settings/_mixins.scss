@@ -15,8 +15,7 @@
 		}
 	}
 }
-$site-mobile: 320;
-$site-desktop: 1920;
+
 @mixin fontSizeVw($mobile-font-size, $desktop-font-size) {
 	font-size: #{$desktop-font-size}px;
 	@include breakpoint(mobile) {

@@ -28,10 +28,16 @@ export default {
   computed: {
     setClass () {
       return this.start ? 'box--start' : (() => {
-        if (this.item.is_set) {
-          if (this.item.currentStatus.stepped_on) return 'box--stepped-on'
-          if (this.item.currentStatus.can_be_stepped) return 'box--can-be-stepped'
-          if (this.item.currentStatus.future_step) return 'box--future-step'
+        if (this.item.isSet) {
+          if (this.item.currentStatus.steppedOn) {
+            return 'box--stepped-on'
+          }
+          if (this.item.currentStatus.canBeStepped) {
+            return 'box--can-be-stepped'
+          }
+          if (this.item.currentStatus.futureStep) {
+            return 'box--future-step'
+          }
         }
         return 'box--disabled'
       })()

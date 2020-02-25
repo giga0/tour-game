@@ -36,7 +36,7 @@ export function getPossibleSteps (board, position, shuffle = false) {
  * @return {boolean}
  */
 function isMoveAllowed (board, step) {
-  return !board[step[0]][step[1]].is_set
+  return !board[step[0]][step[1]].isSet
 }
 
 /**
@@ -73,8 +73,8 @@ function tourRecursive (board, level, steps) {
     // we aren't allowed to go to the same cells twice
     if (isMoveAllowed(board, step)) {
       steps.push(step)
-      board[step[0]][step[1]].is_set = true
-      board[step[0]][step[1]].currentStatus.future_step = true
+      board[step[0]][step[1]].isSet = true
+      board[step[0]][step[1]].currentStatus.futureStep = true
   
       if (tourRecursive(board, level, steps)) {
         return true
@@ -95,7 +95,7 @@ export function calculateTour (board, level, firstStep) {
   const steps = []
 
   steps.push(firstStep)
-  board[firstStep[0]][firstStep[1]].is_set = true
+  board[firstStep[0]][firstStep[1]].isSet = true
 
   const solutionWasFound = tourRecursive(board, level, steps)
 

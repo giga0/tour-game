@@ -1,11 +1,11 @@
-<template>
+<template functional>
   <div
     class="game-stats">
     <h5 class="title">Stats</h5>
-    <span>Timer: {{ stats.timer }}s</span>
-    <span>Left to click: {{ stats.leftToClick }}</span>
-    <span>Lives: {{ stats.lives }}</span>
-    <span>Level: {{ stats.level }}</span>
+    <span>Timer: {{ props.stats.timer }}s</span>
+    <span>Left to click: {{ props.stats.leftToClick }}</span>
+    <span>Lives: {{ props.stats.lives }}</span>
+    <span>Level: {{ props.stats.level }}</span>
   </div>
 </template>
 

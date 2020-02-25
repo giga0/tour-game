@@ -1,17 +1,16 @@
-const DB_NAME = 'tour_game_db'
-const DB_VERSION = 1
-let DB
-
 export default class IndexedDB {
   constructor (stores) {
     this.stores = stores
+    this._db = null
   }
 
   getDb () {
     return new Promise((resolve, reject) => {
-      if (DB) return resolve(DB)
+      if (this._db) {
+        return resolve(this._db)
+      }
 
-      const request = window.indexedDB.open(DB_NAME, DB_VERSION)
+      const request = window.indexedDB.open(process.env.VUE_APP_DB_NAME, process.env.VUE_APP_DB_VERSION)
       
       request.onerror = e => {
         console.error('Error opening db', e)
@@ -19,8 +18,8 @@ export default class IndexedDB {
       }
 
       request.onsuccess = e => {
-        DB = e.target.result
-        resolve(DB)
+        this._db = e.target.result
+        resolve(this._db)
       }
         
       request.onupgradeneeded = e => {
